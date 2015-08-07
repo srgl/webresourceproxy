@@ -35,7 +35,8 @@ namespace WebResourceProxy
 
         private void ReplaceContent(Entity entity, string proxyPath)
         {
-            var request = (HttpWebRequest)WebRequest.Create(proxyPath.Substring(6));
+            var url = proxyPath.Substring(6).Split('\n')[0].TrimEnd();
+            var request = (HttpWebRequest)WebRequest.Create(url);
             var response = (HttpWebResponse)request.GetResponse();
 
             if (response.StatusCode == HttpStatusCode.OK)
