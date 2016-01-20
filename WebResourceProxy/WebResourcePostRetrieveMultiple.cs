@@ -27,27 +27,31 @@ namespace WebResourceProxy
                     var description = entity.GetAttributeValue<string>("description");
                     if (description != null && description.StartsWith("proxy:"))
                     {
-                        ReplaceContent(entity, description);
+                        ReplaceContent(entity, description, context.OrganizationService);
                     }
                 }
             }
         }
 
-        private void ReplaceContent(Entity entity, string proxyPath)
+        private void ReplaceContent(Entity entity, string proxyPath, IOrganizationService service)
         {
-            var url = proxyPath.Substring(6).Split('\n')[0].TrimEnd();
-            var request = (HttpWebRequest)WebRequest.Create(url);
-            var response = (HttpWebResponse)request.GetResponse();
-
-            if (response.StatusCode == HttpStatusCode.OK)
+            try
             {
-                using (var stream = response.GetResponseStream())
-                using (var memoryStream = new MemoryStream())
+                var url = proxyPath.Substring(6).Split('\n')[0].TrimEnd();
+                var request = (HttpWebRequest)WebRequest.Create(url);
+                var response = (HttpWebResponse)request.GetResponse();
+                if (response.StatusCode == HttpStatusCode.OK)
                 {
-                    stream.CopyTo(memoryStream);
-                    entity["content"] = Convert.ToBase64String(memoryStream.ToArray());
+                    using (var stream = response.GetResponseStream())
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        stream.CopyTo(memoryStream);
+                        entity["content"] = Convert.ToBase64String(memoryStream.ToArray());
+                        service.Update(new Entity("webresource") { Id = entity.Id });
+                    }
                 }
             }
+            catch { }
         }
     }
 }
